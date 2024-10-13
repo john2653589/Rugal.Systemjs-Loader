@@ -1,0 +1,14 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "None",
+    "declaration": true,
+    "noImplicitAny": true,
+    "emitDeclarationOnly": true,
+    "esModuleInterop": false,
+    "outDir": "./wwwroot/Systemjs-Loader/src/types"
+  },
+  "exclude": [ "node_modules" ],
+  "include": [ "./wwwroot/Systemjs-Loader/src/SystemJsLoader.ts" ]
+}

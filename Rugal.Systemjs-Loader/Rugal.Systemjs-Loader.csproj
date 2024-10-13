@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<RootNamespace>Rugal.Systemjs_Loader</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.10" />
+		<PackageReference Include="Microsoft.TypeScript.MSBuild" Version="5.6.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="wwwroot\SystemJs-Loader\dist\" />
+	  <Folder Include="wwwroot\SystemJs-Loader\src\types\" />
+	</ItemGroup>
+
+
+	<Target Name="TypeScriptCompileSystem" AfterTargets="Build">
+		<Exec Command="tsc --project tsconfig.types.json" />
+	</Target>
+
+
+</Project>

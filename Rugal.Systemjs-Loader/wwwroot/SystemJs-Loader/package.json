@@ -1,0 +1,15 @@
+{
+  "name": "@rugal.tu/systemjs-loader",
+  "version": "1.0.0-beta.15",
+  "types": "src/types/SystemJsLoader.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "src/index.js",
+  "dependencies": {
+    "systemjs": "^6.15.1"
+  },
+  "devDependencies": {
+    "systemjs": "^6.15.1"
+  }
+}
