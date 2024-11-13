@@ -1,9 +1,12 @@
+type PromiseValue = {
+    $promise: Promise<any> | (() => Promise<any>),
+}
 type JsMap = {
     url?: string;
     deps?: string | string[];
     load?: boolean;
-    value?: any;
-    margin?: boolean,
+    value?: object | PromiseValue;
+    margin?: boolean;
 }
 class SystemJsLoader {
 
@@ -15,20 +18,21 @@ class SystemJsLoader {
         this.AddMap('page', Option);
         return this;
     }
-    public AddMap(Id: string, Option?: JsMap | string | object) {
+    public AddMap(Id: string, Option?: JsMap | string | object, Load: boolean = false) {
         let NewMap: Record<string, string> = {};
         let AddOption = this.$GenerateMap(Id, Option);
+        AddOption.load ??= Load;
 
         if (Id in this.JsMap == false || !AddOption.margin)
             this.JsMap[Id] = AddOption;
         else {
-            let GetMap = this.JsMap[Id];
-            GetMap.url ??= AddOption.url;
-            GetMap.deps ??= AddOption.deps;
-            GetMap.load ??= AddOption.load;
-            GetMap.value ??= AddOption.value;
-            GetMap.margin ??= AddOption.margin;
-            AddOption = GetMap;
+            let MarginMap = this.JsMap[Id];
+            MarginMap.url ??= AddOption.url;
+            MarginMap.deps ??= AddOption.deps;
+            MarginMap.load ??= AddOption.load;
+            MarginMap.value ??= AddOption.value;
+            MarginMap.margin ??= AddOption.margin;
+            AddOption = MarginMap;
         }
 
         NewMap[Id] = AddOption.url;
@@ -40,24 +44,16 @@ class SystemJsLoader {
         if (AddOption.value != null)
             this.System.set(AddOption.url, AddOption.value);
 
-        return this;
-    }
-    public AddMapLoad(Id: string, Option?: JsMap | string | object) {
-        this.AddMap(Id, Option);
-        this.AddLoad(Id);
+        if (AddOption.load)
+            this.AddLoad(Id);
+
         return this;
     }
     public AddMapping(Maps: Record<string, JsMap | string | object>, Load: boolean = false) {
         let AllKeys = Object.keys(Maps);
         for (let Key of AllKeys) {
             let MapValue = Maps[Key];
-            let AddMap = this.$GenerateMap(Key, MapValue);
-
-            AddMap.load ??= Load;
-            if (AddMap.load)
-                this.AddMapLoad(Key, AddMap);
-            else
-                this.AddMap(Key, AddMap);
+            this.AddMap(Key, MapValue, Load);
         }
         return this;
     }
@@ -70,7 +66,6 @@ class SystemJsLoader {
 
         return this;
     }
-
     public LoadNow(UrlOrIds: string | string[], CompleteFunc?: Function) {
         if (typeof (UrlOrIds) == 'string')
             UrlOrIds = [UrlOrIds];
@@ -81,7 +76,18 @@ class SystemJsLoader {
             if (ImportTask == null)
                 ImportTask = this.System.import(Js) as Promise<any>;
             else
-                ImportTask = ImportTask.then(() => this.System.import(Js) as Promise<any>);
+                ImportTask = ImportTask.then((Module) => {
+                    if (Module.$promise instanceof Promise)
+                        return Module.$promise
+                            .then(() => this.System.import(Js))
+                            .catch(() => this.System.import(Js));
+                    if (typeof Module.$promise == 'function')
+                        return Module.$promise()
+                            .then(() => this.System.import(Js))
+                            .catch(() => this.System.import(Js));
+                    else
+                        return this.System.import(Js);
+                });
         }
 
         if (CompleteFunc != null) {
@@ -145,17 +151,20 @@ class SystemJsLoader {
 
         if (typeof (Option) == 'string')
             Result.url = Option;
-        else {
-            let AnyOption = Option as any;
-            if ('url' in AnyOption ||
-                'deps' in AnyOption ||
-                'load' in AnyOption ||
-                'value' in AnyOption ||
-                'margin' in AnyOption)
-                Result = Option;
-            else
-                Result.value = Option;
+        else if (Option instanceof Promise) {
+            Result.value = {
+                $promise: Option,
+            };
         }
+        else if (
+            'url' in Option ||
+            'deps' in Option ||
+            'load' in Option ||
+            'value' in Option ||
+            'margin' in Option)
+            Result = Option;
+        else
+            Result.value = Option;
 
         Result.margin ??= true;
         Result.url ??= `app:${Id}`;

@@ -1,8 +1,11 @@
+type PromiseValue = {
+    $promise: Promise<any> | (() => Promise<any>);
+};
 type JsMap = {
     url?: string;
     deps?: string | string[];
     load?: boolean;
-    value?: any;
+    value?: object | PromiseValue;
     margin?: boolean;
 };
 declare class SystemJsLoader {
@@ -10,8 +13,7 @@ declare class SystemJsLoader {
     JsMap: Record<string, JsMap>;
     LoadQueue: string[];
     AddPage(Option?: JsMap | string | object): this;
-    AddMap(Id: string, Option?: JsMap | string | object): this;
-    AddMapLoad(Id: string, Option?: JsMap | string | object): this;
+    AddMap(Id: string, Option?: JsMap | string | object, Load?: boolean): this;
     AddMapping(Maps: Record<string, JsMap | string | object>, Load?: boolean): this;
     AddLoad(UrlOrIds: string | string[]): this;
     LoadNow(UrlOrIds: string | string[], CompleteFunc?: Function): this;
