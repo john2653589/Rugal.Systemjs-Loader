@@ -7,6 +7,7 @@ type JsMap = {
     load?: boolean;
     value?: object | PromiseValue;
     margin?: boolean;
+    force?: boolean;
 };
 declare class SystemJsLoader {
     System: any;
@@ -22,6 +23,7 @@ declare class SystemJsLoader {
     private $OrderDeps;
     private $RCS_OrderDeps;
     private $GenerateMap;
+    private $GenerateId;
 }
 declare const JsLoader: SystemJsLoader;
 export default JsLoader;

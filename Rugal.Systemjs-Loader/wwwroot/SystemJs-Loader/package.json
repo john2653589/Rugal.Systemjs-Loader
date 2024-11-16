@@ -1,6 +1,6 @@
 {
   "name": "@rugal.tu/systemjs-loader",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "types": "src/types/SystemJsLoader.d.ts",
   "publishConfig": {
     "access": "public"

@@ -7,6 +7,7 @@ type JsMap = {
     load?: boolean;
     value?: object | PromiseValue;
     margin?: boolean;
+    force?: boolean;
 }
 class SystemJsLoader {
 
@@ -19,7 +20,6 @@ class SystemJsLoader {
         return this;
     }
     public AddMap(Id: string, Option?: JsMap | string | object, Load: boolean = false) {
-        let NewMap: Record<string, string> = {};
         let AddOption = this.$GenerateMap(Id, Option);
         AddOption.load ??= Load;
 
@@ -32,10 +32,21 @@ class SystemJsLoader {
             MarginMap.load ??= AddOption.load;
             MarginMap.value ??= AddOption.value;
             MarginMap.margin ??= AddOption.margin;
+            MarginMap.force ??= AddOption.force;
             AddOption = MarginMap;
         }
 
+        if (AddOption.force == true && !AddOption.url.match(/^app:/g)) {
+            let HasQuery = AddOption.url.includes('?');
+            let Id = this.$GenerateId();
+            AddOption.url += HasQuery ? `&id=${Id}` : `?id=${Id}`;
+        }
+
+        let NewMap: Record<string, string> = {};
+
         NewMap[Id] = AddOption.url;
+
+
         this.System.addImportMap({
             imports: {
                 ...NewMap,
@@ -72,21 +83,25 @@ class SystemJsLoader {
 
         UrlOrIds = this.$OrderDeps(UrlOrIds);
         let ImportTask: Promise<any> = null;
-        for (let Js of UrlOrIds) {
+        for (let Id of UrlOrIds) {
+            let GetMap = this.JsMap[Id];
+            if (GetMap.url.match(/^app:/g) && GetMap.value == null)
+                continue;
+
             if (ImportTask == null)
-                ImportTask = this.System.import(Js) as Promise<any>;
+                ImportTask = this.System.import(Id) as Promise<any>;
             else
                 ImportTask = ImportTask.then((Module) => {
                     if (Module.$promise instanceof Promise)
                         return Module.$promise
-                            .then(() => this.System.import(Js))
-                            .catch(() => this.System.import(Js));
+                            .then(() => this.System.import(Id))
+                            .catch(() => this.System.import(Id));
                     if (typeof Module.$promise == 'function')
                         return Module.$promise()
-                            .then(() => this.System.import(Js))
-                            .catch(() => this.System.import(Js));
+                            .then(() => this.System.import(Id))
+                            .catch(() => this.System.import(Id));
                     else
-                        return this.System.import(Js);
+                        return this.System.import(Id);
                 });
         }
 
@@ -169,6 +184,14 @@ class SystemJsLoader {
         Result.margin ??= true;
         Result.url ??= `app:${Id}`;
         return Result;
+    }
+    private $GenerateId(): string {
+        let NewId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+            let RandomValue = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
+            let Id = char === 'x' ? RandomValue : (RandomValue & 0x3) | 0x8;
+            return Id.toString(16);
+        });
+        return NewId;
     }
 }
 
